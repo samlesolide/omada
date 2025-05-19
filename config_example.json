@@ -1,0 +1,10 @@
+{
+  "OMADA_HOST": "ip_omada",
+  "OMADA_PORT": "8043",
+  "OMADA_SITE": "nom_site",
+  "USERNAME": "nom_utilisateur",
+  "PASSWORD": "mot_de_passe",
+  "DEFAULT_SSID": "nom_ssid",
+  "MAC_FILTER_ID": "id_mac_filter",
+  "ORIGINAL_SSID_NAME": "nom_ssid"
+} 
