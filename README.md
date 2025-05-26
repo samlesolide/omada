@@ -214,4 +214,70 @@ rest_command:
 
 Vous pouvez ensuite utiliser ces commandes dans vos automatisations, scripts ou boutons Home Assistant.
 
-> ⚠️ L'API n'a pas d'authentification par défaut. Restreignez l'accès réseau si besoin (firewall, VLAN, etc.). 
+> ⚠️ L'API n'a pas d'authentification par défaut. Restreignez l'accès réseau si besoin (firewall, VLAN, etc.).
+
+### Faire tourner l'API en permanence avec `systemd` (sur Raspberry Pi / Linux)
+
+Pour que le serveur API Flask (`omada_api_server.py`) s'exécute en continu en arrière-plan et redémarre automatiquement avec le système, il est recommandé de le configurer comme un service `systemd`.
+
+1.  **Créez un fichier de service `systemd` :**
+    Ouvrez un nouveau fichier de service avec `nano` ou votre éditeur préféré :
+    ```bash
+    sudo nano /etc/systemd/system/omada-api.service
+    ```
+
+2.  **Collez la configuration suivante dans le fichier :**
+    Assurez-vous d'adapter `User`, `Group`, `WorkingDirectory`, et `ExecStart` si votre nom d'utilisateur ou le chemin vers le projet est différent. Les chemins doivent être absolus.
+
+    ```ini
+    [Unit]
+    Description=Omada API Flask Server
+    After=network.target
+
+    [Service]
+    User=pi
+    Group=pi
+    WorkingDirectory=/home/pi/omada/omada-tools # Adaptez ce chemin si nécessaire
+    ExecStart=/home/pi/omada/omada-tools/venv/bin/python /home/pi/omada/omada-tools/omada_api_server.py # Adaptez ce chemin si nécessaire
+    Restart=always
+    Environment="PYTHONUNBUFFERED=1"
+
+    [Install]
+    WantedBy=multi-user.target
+    ```
+
+    *   `User` et `Group` : L'utilisateur sous lequel le service s'exécutera (généralement `pi` sur un Raspberry Pi).
+    *   `WorkingDirectory` : Le chemin absolu vers le dossier où se trouvent vos scripts (`omada_api_server.py`, `config.json`, etc.) et le dossier `venv`.
+    *   `ExecStart` : Le chemin absolu vers l'interpréteur Python de votre environnement virtuel (`venv/bin/python`) suivi du chemin absolu vers votre script `omada_api_server.py`.
+
+3.  **Sauvegardez et fermez le fichier** (Ctrl+X, puis Y, puis Entrée dans `nano`).
+
+4.  **Rechargez la configuration de `systemd` :**
+    Pour que `systemd` prenne en compte le nouveau service.
+    ```bash
+    sudo systemctl daemon-reload
+    ```
+
+5.  **Activez le service pour qu'il démarre au boot :**
+    ```bash
+    sudo systemctl enable omada-api.service
+    ```
+
+6.  **Démarrez le service :**
+    ```bash
+    sudo systemctl start omada-api.service
+    ```
+
+7.  **Vérifiez l'état du service :**
+    ```bash
+    sudo systemctl status omada-api.service
+    ```
+    Vous devriez voir `active (running)`. Si ce n'est pas le cas, utilisez `sudo journalctl -u omada-api.service -b` pour voir les logs et diagnostiquer les erreurs.
+
+8.  **Pour consulter les logs du service plus tard :**
+    ```bash
+    sudo journalctl -u omada-api.service # Voir tous les logs
+    sudo journalctl -f -u omada-api.service # Suivre les logs en temps réel
+    ```
+
+Avec ces étapes, votre API Omada sera gérée par `systemd` et fonctionnera de manière fiable en arrière-plan. 
